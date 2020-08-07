@@ -25,12 +25,11 @@ public static class DatabaseHandler
 
     public static void GetUsers(GetUsersCallback callback)
     {
-        RestClient.Get($"{databaseURL}users.json?auth={AuthHandler.idToken}").Then(response =>
+        RestClient.Get($"{databaseURL}users.json?auth={AuthHandler.idToken}").Then(
+        response =>
         {
             var responseJson = response.Text;
 
-            // Using the FullSerializer library: https://github.com/jacobdufault/fullserializer
-            // to serialize more complex types (a Dictionary, in this case)
             var data = fsJsonParser.Parse(responseJson);
             object deserialized = null;
             serializer.TryDeserialize(data, typeof(Dictionary<string, User>), ref deserialized);

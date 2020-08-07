@@ -78,16 +78,15 @@ public static class AuthHandler
 
                 var authResponse = deserialized as Dictionary<string, string>;
 
-                CheckEmailVerification(authResponse["idToken"], () =>
+                CheckEmailVerification(authResponse["idToken"],
+                () =>
                 {
                     callback();
-                    //DatabaseHandler.GetUser(userId, user => { Debug.Log($"{user.coins}"); }, idToken);
                 }, () => { fallback("E-mail not verified"); });
             }).Catch(exception => { fallback("E-mail or password is incorrect."); });
     }
 
-    private static void CheckEmailVerification(string newIdToken, EmailVerificationSuccess callback,
-        EmailVerificationFail fallback)
+    private static void CheckEmailVerification(string newIdToken, EmailVerificationSuccess callback, EmailVerificationFail fallback)
     {
         var payLoad = $"{{\"idToken\":\"{newIdToken}\"}}";
         RestClient.Post($"https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key={apiKey}",
