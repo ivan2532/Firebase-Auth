@@ -23,21 +23,23 @@ public static class AuthHandler
 
     private static fsSerializer serializer = new fsSerializer();
 
+    public delegate void SignInSuccess();
+    public delegate void SignInFail(string info);
+    public delegate void RegistrationSuccess();
+    public delegate void RegistrationFail(string info);
     public delegate void EmailVerificationSuccess();
     public delegate void EmailVerificationFail();
 
     public static string idToken;
     public static string userId;
 
-    public static void SignUp(string email, string password, User user)
+    public static void SignUp(string email, string password, User user, RegistrationSuccess callback, RegistrationFail fallback)
     {
         var payLoad = $"{{\"email\":\"{email}\",\"password\":\"{password}\",\"returnSecureToken\":true}}";
         RestClient.Post($"https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key={apiKey}",
             payLoad).Then(
             response =>
             {
-                Debug.Log("Created User");
-
                 var responseJson = response.Text;
 
                 var data = fsJsonParser.Parse(responseJson);
@@ -49,7 +51,9 @@ public static class AuthHandler
                 DatabaseHandler.PostUser(user, authResponse["localId"], () => { }, authResponse["idToken"]);
 
                 SendEmailVerification(authResponse["idToken"]);
-            });
+
+                callback();
+            }).Catch(exception => { fallback("Failed to create account."); });
     }
 
     private static void SendEmailVerification(string newIdToken)
@@ -59,7 +63,7 @@ public static class AuthHandler
             $"https://www.googleapis.com/identitytoolkit/v3/relyingparty/getOobConfirmationCode?key={apiKey}", payLoad);
     }
 
-    public static void SignIn(string email, string password)
+    public static void SignIn(string email, string password, SignInSuccess callback, SignInFail fallback)
     {
         var payLoad = $"{{\"email\":\"{email}\",\"password\":\"{password}\",\"returnSecureToken\":true}}";
         RestClient.Post($"https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key={apiKey}",
@@ -76,10 +80,10 @@ public static class AuthHandler
 
                 CheckEmailVerification(authResponse["idToken"], () =>
                 {
-                    Debug.Log("Email verified, getting user info");
-                    DatabaseHandler.GetUser(userId, user => { Debug.Log($"{user.coins}"); }, idToken);
-                }, () => { Debug.Log("Email not verified"); });
-            });
+                    callback();
+                    //DatabaseHandler.GetUser(userId, user => { Debug.Log($"{user.coins}"); }, idToken);
+                }, () => { fallback("E-mail not verified"); });
+            }).Catch(exception => { fallback("E-mail or password is incorrect."); });
     }
 
     private static void CheckEmailVerification(string newIdToken, EmailVerificationSuccess callback,
