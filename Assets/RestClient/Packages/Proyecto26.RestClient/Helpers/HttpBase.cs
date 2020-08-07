@@ -19,23 +19,23 @@ namespace Proyecto26
                     var response = request.CreateWebResponse();
                     if (request.IsValidRequest(options))
                     {
-                        DebugLog(options.EnableDebug, string.Format("RestClient - Response\nUrl: {0}\nMethod: {1}\nStatus: {2}\nResponse: {3}", options.Uri, options.Method, request.responseCode, options.ParseResponseBody ? response.Text : "body not parsed"), false);
+                        DebugLog(options.EnableDebug, string.Format("Url: {0}\nMethod: {1}\nStatus: {2}\nResponse: {3}", options.Uri, options.Method, request.responseCode, response.Text), false);
                         callback(null, response);
                         break;
                     }
-                    else if (!options.IsAborted && retries < options.Retries && request.isNetworkError)
+                    else if (!options.IsAborted && retries < options.Retries)
                     {
                         yield return new WaitForSeconds(options.RetrySecondsDelay);
                         retries++;
-                        if (options.RetryCallback != null)
+                        if(options.RetryCallback != null)
                         {
-                            options.RetryCallback(CreateException(options, request), retries);
+                            options.RetryCallback(CreateException(request), retries);
                         }
-                        DebugLog(options.EnableDebug, string.Format("RestClient - Retry Request\nUrl: {0}\nMethod: {1}", options.Uri, options.Method), false);
+                        DebugLog(options.EnableDebug, string.Format("Retry Request\nUrl: {0}\nMethod: {1}", options.Uri, options.Method), false);
                     }
                     else
                     {
-                        var err = CreateException(options, request);
+                        var err = CreateException(request);
                         DebugLog(options.EnableDebug, err, true);
                         callback(err, response);
                         break;
@@ -47,21 +47,19 @@ namespace Proyecto26
 
         private static UnityWebRequest CreateRequest(RequestHelper options)
         {
-            var url = options.Uri.BuildUrl(options.Params);
-            DebugLog(options.EnableDebug, string.Format("RestClient - Request\nUrl: {0}", url), false);
             if (options.FormData is WWWForm && options.Method == UnityWebRequest.kHttpVerbPOST)
             {
-                return UnityWebRequest.Post(url, options.FormData);
+                return UnityWebRequest.Post(options.Uri, options.FormData);
             }
             else
             {
-                return new UnityWebRequest(url, options.Method);
+                return new UnityWebRequest(options.Uri, options.Method);
             }
         }
 
-        private static RequestException CreateException(RequestHelper options, UnityWebRequest request)
+        private static RequestException CreateException(UnityWebRequest request)
         {
-            return new RequestException(request.error, request.isHttpError, request.isNetworkError, request.responseCode, options.ParseResponseBody ? request.downloadHandler.text : "body not parsed");
+            return new RequestException(request.error, request.isHttpError, request.isNetworkError, request.responseCode, request.downloadHandler.text);
         }
 
         private static void DebugLog(bool debugEnabled, object message, bool isError)
@@ -84,20 +82,16 @@ namespace Proyecto26
         {
             return CreateRequestAndRetry(options, (RequestException err, ResponseHelper res) => {
                 var body = default(TResponse);
-                try
+                if (err == null && !string.IsNullOrEmpty(res.Text))
                 {
-                    if (err == null && res.Data != null && options.ParseResponseBody)
+                    try { 
                         body = JsonUtility.FromJson<TResponse>(res.Text);
+                    }
+                    catch (Exception error) {
+                        DebugLog(options.EnableDebug, string.Format("Invalid JSON format\nError: {0}", error.Message), true);
+                    }
                 }
-                catch (Exception error)
-                {
-                    DebugLog(options.EnableDebug, string.Format("RestClient - Invalid JSON format\nError: {0}", error.Message), true);
-                    err = new RequestException(error.Message);
-                }
-                finally
-                {
-                    callback(err, res, body);
-                }
+                callback(err, res, body);
             });
         }
 
@@ -105,20 +99,17 @@ namespace Proyecto26
         {
             return CreateRequestAndRetry(options, (RequestException err, ResponseHelper res) => {
                 var body = default(TResponse[]);
-                try
+                if (err == null && !string.IsNullOrEmpty(res.Text))
                 {
-                    if (err == null && res.Data != null && options.ParseResponseBody)
+                    try { 
                         body = JsonHelper.ArrayFromJson<TResponse>(res.Text);
+                    }
+                    catch (Exception error)
+                    {
+                        DebugLog(options.EnableDebug, string.Format("Invalid JSON format\nError: {0}", error.Message), true);
+                    }
                 }
-                catch (Exception error)
-                {
-                    DebugLog(options.EnableDebug, string.Format("RestClient - Invalid JSON format\nError: {0}", error.Message), true);
-                    err = new RequestException(error.Message);
-                }
-                finally
-                {
-                    callback(err, res, body);
-                }
+                callback(err, res, body);
             });
         }
 

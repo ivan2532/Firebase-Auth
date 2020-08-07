@@ -7,14 +7,10 @@
 [Serializable] // This makes the class able to be serialized into a JSON
 public class User
 {
-    public string name;
-    public string surname;
-    public int age;
+    public int coins;
 
-    public User(string name, string surname, int age)
+    public User(int coins = 0)
     {
-        this.name = name;
-        this.surname = surname;
-        this.age = age;
+        this.coins = coins;
     }
 }

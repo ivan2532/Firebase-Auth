@@ -8,7 +8,7 @@ namespace Proyecto26
         private class CoroutineHolder : MonoBehaviour { }
 
         private static CoroutineHolder _runner;
-        private static CoroutineHolder Runner
+        private static CoroutineHolder runner
         {
             get
             {
@@ -23,7 +23,7 @@ namespace Proyecto26
 
         public static Coroutine StartCoroutine(IEnumerator coroutine)
         {
-            return Runner.StartCoroutine(coroutine);
+            return runner.StartCoroutine(coroutine);
         }
     }
 }

@@ -34,12 +34,8 @@ namespace Proyecto26.Common
                 request.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyRaw);
                 request.uploadHandler.contentType = contentType;
             }
-
             if (options.DownloadHandler is DownloadHandler)
-            {
                 request.downloadHandler = options.DownloadHandler;
-                options.ParseResponseBody = (options.DownloadHandler is DownloadHandlerBuffer);
-            }
             else
                 request.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
             if (!string.IsNullOrEmpty(contentType))
@@ -58,12 +54,10 @@ namespace Proyecto26.Common
             {
                 request.timeout = options.Timeout.Value;
             }
-#if !UNITY_2019_3_OR_NEWER
             if (options.ChunkedTransfer.HasValue)
             {
                 request.chunkedTransfer = options.ChunkedTransfer.Value;
             }
-#endif
             if (options.UseHttpContinue.HasValue)
             {
                 request.useHttpContinue = options.UseHttpContinue.Value;

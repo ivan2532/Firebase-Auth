@@ -117,7 +117,6 @@ namespace Proyecto26
             set { _enableDebug = value; }
         }
 
-#if !UNITY_2019_3_OR_NEWER
         private bool? _chunkedTransfer;
         /// <summary>
         /// Indicates whether the UnityWebRequest system should employ the HTTP/1.1 chunked-transfer encoding method.
@@ -127,7 +126,6 @@ namespace Proyecto26
             get { return _chunkedTransfer; }
             set { _chunkedTransfer = value; }
         }
-#endif
 
         private bool? _useHttpContinue = true;
         /// <summary>
@@ -236,33 +234,6 @@ namespace Proyecto26
                 return _headers;
             }
             set { _headers = value; } 
-        }
-
-        private Dictionary<string, string> _params;
-        /// <summary>
-        /// The HTTP query string params to send with the request
-        /// </summary>
-        public Dictionary<string, string> Params
-        {
-            get
-            {
-                if (_params == null)
-                {
-                    _params = new Dictionary<string, string>();
-                }
-                return _params;
-            }
-            set { _params = value; }
-        }
-
-        private bool _parseResponseBody = true;
-        /// <summary>
-        /// Whether to parse the response body as JSON or not. Note: parsing a large non-text file will have severe performance impact.
-        /// </summary>
-        public bool ParseResponseBody
-        {
-            get { return _parseResponseBody; }
-            set { _parseResponseBody = value; }
         }
     }
 }
